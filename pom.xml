@@ -20,13 +20,13 @@
     </properties>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/ErwanLT/JasperClient</developerConnection>
-        <tag>HEAD</tag>
+        <developerConnection>scm:git:https://github.com/ErwanLT/JasperClient.git</developerConnection>
     </scm>
 
     <distributionManagement>
         <repository>
             <id>maven-repository</id>
+            <name>GitHub</name>
             <url>https://github.com/ErwanLT/JasperClient</url>
         </repository>
     </distributionManagement>
@@ -41,5 +41,19 @@
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>3.0.0-M6</version>
+                <configuration>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
