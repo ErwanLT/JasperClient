@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-abstract class JasperClient implements IJasperClient{
+public abstract class JasperClient implements IJasperClient{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JasperClient.class);
 
