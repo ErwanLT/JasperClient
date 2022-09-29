@@ -1,7 +1,7 @@
 package fr.eletutour.client;
 
 import fr.eletutour.model.DocumentJasperRequest;
-import fr.eletutour.model.ExecutionResponse;
+import fr.eletutour.model.response.execution.ExecutionResponse;
 
 public interface IJasperClient {
 
