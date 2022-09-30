@@ -3,7 +3,7 @@ package fr.eletutour.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.eletutour.model.DocumentJasperRequest;
-import fr.eletutour.model.ExecutionResponse;
+import fr.eletutour.model.response.execution.ExecutionResponse;
 import fr.eletutour.model.ReportParameters;
 import fr.eletutour.model.exception.JasperClientException;
 import fr.eletutour.model.parameter.DocumentJasperArrayParameter;
@@ -31,15 +31,14 @@ public abstract class JasperClient implements IJasperClient{
 
     private static final String REPORT_PARAMETER_NAME = "<reportParameter name=\"";
     private static final String REPORT_PARAMETER_CLOSE = "</reportParameter>";
-    private static final String REGEX_TO_BASE64_STRING = ":\"[a-zA-Z\\d+]+\"";
-    private static final String TEXT_FILE_TO_LOG = ":\"THIS IS BASE64 CONTENT...\"";
-
+    public static final String EXECUTION_ERROR = "Error while executing report";
     protected final String user;
     protected final String password;
     protected final String jasperUrl;
 
     private WebClient client;
     private List<String> cookies;
+
 
     protected JasperClient(String user, String password, String jasperUrl) {
         this.user = user;
@@ -87,7 +86,7 @@ public abstract class JasperClient implements IJasperClient{
 
         var executionResponse = headerSpec.exchangeToMono(response -> {
             if(!response.statusCode().is2xxSuccessful()){
-                throw new JasperClientException("Error while executing report", HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new JasperClientException(EXECUTION_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
             } else {
                 cookies.add(response.cookies().get("JSESSIONID").get(0).getValue());
                 cookies.add(response.cookies().get("SERVERID").get(0).getValue());
@@ -142,11 +141,7 @@ public abstract class JasperClient implements IJasperClient{
         sb.append("</parameters>")
                 .append("</reportExecutionRequest>");
 
-        String requestBody = sb.toString();
-        String bodyToLog = requestBody.replaceAll(REGEX_TO_BASE64_STRING, TEXT_FILE_TO_LOG);
-        LOGGER.debug("body of the request : {}", bodyToLog);
-
-        return requestBody;
+        return sb.toString();
     }
 
     /**
