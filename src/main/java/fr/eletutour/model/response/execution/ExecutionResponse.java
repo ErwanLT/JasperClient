@@ -1,5 +1,8 @@
 package fr.eletutour.model.response.execution;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -10,7 +13,12 @@ public final class ExecutionResponse {
     private final String reportURI;
     private final Export[] exports;
 
-    public ExecutionResponse(String status, int totalPages, String requestId, String reportURI, Export[] exports) {
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public ExecutionResponse(@JsonProperty("status") String status,
+                             @JsonProperty("totalPages")int totalPages,
+                             @JsonProperty("requestId") String requestId,
+                             @JsonProperty("reportURI") String reportURI,
+                             @JsonProperty("exports") Export[] exports) {
         this.status = status;
         this.totalPages = totalPages;
         this.requestId = requestId;

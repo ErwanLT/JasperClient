@@ -1,5 +1,8 @@
 package fr.eletutour.model.response.execution;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 public final class Export {
@@ -7,7 +10,10 @@ public final class Export {
     private final String id;
     private final OutputResource resource;
 
-    public Export(String status, String id, OutputResource resource) {
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public Export(@JsonProperty("status") String status,
+                  @JsonProperty("id") String id,
+                  @JsonProperty("resource") OutputResource resource) {
         this.status = status;
         this.id = id;
         this.resource = resource;

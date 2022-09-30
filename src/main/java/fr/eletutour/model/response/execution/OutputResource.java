@@ -1,5 +1,8 @@
 package fr.eletutour.model.response.execution;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 public final class OutputResource {
@@ -8,7 +11,11 @@ public final class OutputResource {
     private final Boolean outputFinal;
     private final Long outputTimestamp;
 
-    public OutputResource(String contentType, String fileName, Boolean outputFinal, Long outputTimestamp) {
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public OutputResource(@JsonProperty("contentType") String contentType,
+                          @JsonProperty("fileName") String fileName,
+                          @JsonProperty("outputFinal") Boolean outputFinal,
+                          @JsonProperty("outputTimestamp") Long outputTimestamp) {
         this.contentType = contentType;
         this.fileName = fileName;
         this.outputFinal = outputFinal;
