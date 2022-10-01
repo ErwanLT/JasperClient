@@ -3,6 +3,9 @@ package fr.eletutour.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.eletutour.model.DocumentJasperRequest;
+import fr.eletutour.model.request.execution.Parameters;
+import fr.eletutour.model.request.execution.ReportExecutionRequest;
+import fr.eletutour.model.request.execution.ReportParameter;
 import fr.eletutour.model.response.execution.ExecutionResponse;
 import fr.eletutour.model.ReportParameters;
 import fr.eletutour.model.exception.JasperClientException;
@@ -19,6 +22,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,10 +34,6 @@ import java.util.Map;
 public abstract class JasperClient implements IJasperClient{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JasperClient.class);
-
-
-    private static final String REPORT_PARAMETER_NAME = "<reportParameter name=\"";
-    private static final String REPORT_PARAMETER_CLOSE = "</reportParameter>";
     public static final String EXECUTION_ERROR = "Error while executing report";
     protected final String user;
     protected final String password;
@@ -117,31 +120,32 @@ public abstract class JasperClient implements IJasperClient{
                 .block();
     }
 
+    /**
+     * Construction du body de la requête d'éxection du rapport
+     * @param documentJasperRequest les informations relatives au rapport
+     * @return une chaine XML
+     */
     private String buildXMLBody(DocumentJasperRequest documentJasperRequest) {
-        LOGGER.debug("Build request body for report : {}", documentJasperRequest.getUrlReport());
-        StringBuilder sb = new StringBuilder()
-                .append("<reportExecutionRequest>")
-                .append("<reportUnitUri>")
-                .append(documentJasperRequest.getUrlReport())
-                .append("</reportUnitUri>")
-                .append("<async>false</async>")
-                .append("<outputFormat>")
-                .append(documentJasperRequest.getFormat().getFormat())
-                .append("</outputFormat>")
-                .append("<parameters>");
+        LOGGER.info("Construction corps de la requete pour le rapport : {}", documentJasperRequest.getUrlReport());
+        ReportExecutionRequest reportExecutionRequest = new ReportExecutionRequest()
+                .reportUnitUri(documentJasperRequest.getUrlReport())
+                .asyn(Boolean.FALSE)
+                .outputFormat(documentJasperRequest.getFormat().getFormat())
+                .parameters(new Parameters()
+                        .reportParameters(new ReportParameter()
+                                .value(buildJsonString(documentJasperRequest.getParameters(), documentJasperRequest.getUrlReport()))));
 
-        String jsonString = buildJsonString(documentJasperRequest.getParameters(), documentJasperRequest.getUrlReport());
+        StringWriter sw = new StringWriter();
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(ReportExecutionRequest.class);
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            marshaller.marshal(reportExecutionRequest, sw);
+        } catch (JAXBException e) {
+            throw new JasperClientException("Erreur lors de la création du corps de la requete", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
-        sb.append(REPORT_PARAMETER_NAME).append("jsonString").append("\">")
-                .append("<value>")
-                .append(jsonString)
-                .append("</value>")
-                .append(REPORT_PARAMETER_CLOSE);
-
-        sb.append("</parameters>")
-                .append("</reportExecutionRequest>");
-
-        return sb.toString();
+        return sw.toString();
     }
 
     /**
