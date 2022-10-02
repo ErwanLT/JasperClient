@@ -17,6 +17,7 @@ import fr.eletutour.model.request.execution.Parameters;
 import fr.eletutour.model.request.execution.ReportExecutionRequest;
 import fr.eletutour.model.request.execution.ReportParameter;
 import fr.eletutour.model.response.execution.ExecutionResponse;
+import fr.eletutour.model.response.status.StatusResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -31,6 +32,8 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static org.apache.tomcat.jni.Time.sleep;
+
 public abstract class JasperClient implements IJasperClient{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JasperClient.class);
@@ -39,8 +42,10 @@ public abstract class JasperClient implements IJasperClient{
     private static final String EXECUTION_ERROR_REPORT = EXECUTION_ERROR + "pour le rapport {}.";
     private static final String COOKIES_ERROR = "Une erreur est survenue lors de la récupération des cookies.";
     private static final String EXECUTION_STEP = "execution";
+    private static final String STATUS_STEP = "check status";
     private static final String RECUPERATION_STEP = "recuperation";
     public static final String CONTENT_TYPE = "Content-Type";
+    private static final String STATUS_ERROR = "Error while checking status.";
     protected final String user;
     protected final String password;
     protected final String jasperUrl;
@@ -82,12 +87,37 @@ public abstract class JasperClient implements IJasperClient{
         Map<String,Object> headerMap = initHeaderMap();
         List<String> cookies = new ArrayList<>();
         ExecutionResponse executionResponse = execute(documentJasperRequest, cookies, headerMap);
-
+        boolean exportReady = executionResponse.getExports()[0].getStatus().equals("ready");
+        while (!exportReady){
+            sleep(100);
+            exportReady = checkExportStatus(executionResponse.getRequestId(), executionResponse.getExports()[0].getId(), cookies, headerMap);
+        }
         byte[] pdf = getReport(documentJasperRequest.getUrlReport(), executionResponse.getRequestId(), executionResponse.getExports()[0].getId(), cookies, headerMap);
         if (pdf == null || pdf.length == 0) {
             throw new JasperClientException("The PDF is empty", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return pdf;
+    }
+
+    private Boolean checkExportStatus(String requestId, String reportId, List<String> cookies, Map<String, Object> headerMap) {
+        headerMap.put("Cookie", StringUtils.join(cookies, ";"));
+        headerMap.remove(CONTENT_TYPE);
+
+        try (Response r = jasperFeignClient.status(headerMap, requestId, reportId)) {
+
+            checkResponseStatut(r.status(), STATUS_STEP, null, null);
+
+            try {
+                String statusResponse = IOUtils.toString(r.body().asInputStream(), String.valueOf(StandardCharsets.UTF_8));
+                StatusResponse status = new ObjectMapper().readValue(statusResponse, StatusResponse.class);
+                if ("ready".equals(status.getValue())) {
+                    return true;
+                }
+            } catch (IOException e) {
+                throw new JasperClientException(STATUS_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        return false;
     }
 
     /**
@@ -243,6 +273,10 @@ public abstract class JasperClient implements IJasperClient{
                 case RECUPERATION_STEP -> {
                     LOGGER.error(RECUPERATION_ERROR);
                     throw new JasperClientException(RECUPERATION_ERROR + " : " + HttpStatus.resolve(statusCode), HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                case STATUS_STEP -> {
+                    LOGGER.error(STATUS_ERROR);
+                    throw new JasperClientException(STATUS_ERROR + " : " + HttpStatus.resolve(statusCode), HttpStatus.INTERNAL_SERVER_ERROR);
                 }
                 default -> throw new IllegalArgumentException("Step non reconnu.");
             }
