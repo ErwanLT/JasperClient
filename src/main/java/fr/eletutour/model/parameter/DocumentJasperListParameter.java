@@ -25,5 +25,52 @@
  */
 package fr.eletutour.model.parameter;
 
+import java.util.List;
+import java.util.Objects;
+
 public class DocumentJasperListParameter {
+
+    private String key;
+    private List<String> values;
+
+    public DocumentJasperListParameter() {
+    }
+
+    public DocumentJasperListParameter withKey(String key){
+        this.setKey(key);
+        return this;
+    }
+
+    public DocumentJasperListParameter withValues(List<String> values){
+        this.setValues(values);
+        return this;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public List<String> getValues() {
+        return values;
+    }
+
+    public void setValues(List<String> value) {
+        this.values = value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DocumentJasperListParameter that)) return false;
+        return Objects.equals(getKey(), that.getKey()) && Objects.equals(getValues(), that.getValues());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getKey(), getValues());
+    }
 }

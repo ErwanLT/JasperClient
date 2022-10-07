@@ -27,6 +27,7 @@ package fr.eletutour.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import feign.Feign;
 import feign.Response;
 import feign.Retryer;
@@ -86,12 +87,12 @@ public abstract class JasperClient implements IJasperClient{
     }
 
     private void init() {
-        Feign.Builder builder = Feign.builder();
-        builder.requestInterceptor(new BasicAuthRequestInterceptor(user,
-                password));
-        builder.logger(new Slf4jLogger(JasperFeignClient.class));
-        builder.logLevel(feign.Logger.Level.FULL);
-        builder.retryer(Retryer.NEVER_RETRY);
+        Feign.Builder builder = Feign.builder()
+                .requestInterceptor(new BasicAuthRequestInterceptor(user,
+                password))
+                .logger(new Slf4jLogger(JasperFeignClient.class))
+                .logLevel(feign.Logger.Level.FULL)
+                .retryer(Retryer.NEVER_RETRY);
         jasperFeignClient = builder
                 .target(JasperFeignClient.class, jasperUrl);
 
@@ -152,7 +153,6 @@ public abstract class JasperClient implements IJasperClient{
     private Map<String, Object> initHeaderMap() {
         Map<String,Object> headerMap = new HashMap<>();
         headerMap.put("Accept-Encoding", "gzip, deflate, br");
-        headerMap.put("Accept", "*/*");
         headerMap.put("Connection", "keep-alive");
         return headerMap;
     }
@@ -175,6 +175,7 @@ public abstract class JasperClient implements IJasperClient{
 
         String requestBody = buildXMLBody(documentJasperRequest);
         headerMap.put(CONTENT_TYPE, "application/xml");
+        headerMap.put("Accept", "application/json");
         feign.Response r = jasperFeignClient.executeReport(headerMap, requestBody);
 
         checkResponseStatut(r.status(), EXECUTION_STEP, documentJasperRequest.getUrlReport(), requestBody);
@@ -182,7 +183,8 @@ public abstract class JasperClient implements IJasperClient{
 
         try {
             String execResponse = IOUtils.toString(r.body().asInputStream(), String.valueOf(StandardCharsets.UTF_8));
-            return new ObjectMapper().readValue(execResponse, ExecutionResponse.class);
+            Gson g = new Gson();
+            return g.fromJson(execResponse, ExecutionResponse.class);
         } catch (IOException e) {
             throw new JasperClientException("Erreur lors du parsing de la réponse de la requete d'execution", HttpStatus.INTERNAL_SERVER_ERROR);
         }

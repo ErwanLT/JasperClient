@@ -47,4 +47,16 @@ public class ReportParameters {
     public List<DocumentJasperArrayParameter> getDocumentJasperArrayParameterList() {
         return documentJasperArrayParameterList;
     }
+
+    public void setDocumentJasperSimpleParameterList(List<DocumentJasperSimpleParameter> documentJasperSimpleParameterList) {
+        this.documentJasperSimpleParameterList = documentJasperSimpleParameterList;
+    }
+
+    public void setDocumentJasperListParameterList(List<DocumentJasperListParameter> documentJasperListParameterList) {
+        this.documentJasperListParameterList = documentJasperListParameterList;
+    }
+
+    public void setDocumentJasperArrayParameterList(List<DocumentJasperArrayParameter> documentJasperArrayParameterList) {
+        this.documentJasperArrayParameterList = documentJasperArrayParameterList;
+    }
 }
