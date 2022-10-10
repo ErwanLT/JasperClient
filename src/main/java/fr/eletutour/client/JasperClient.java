@@ -27,6 +27,7 @@ package fr.eletutour.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import feign.Feign;
 import feign.Response;
 import feign.Retryer;
@@ -44,7 +45,7 @@ import fr.eletutour.model.request.execution.ReportParameter;
 import fr.eletutour.model.response.execution.ExecutionResponse;
 import fr.eletutour.model.response.status.StatusResponse;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -183,7 +184,8 @@ public abstract class JasperClient implements IJasperClient{
 
         try {
             String execResponse = IOUtils.toString(r.body().asInputStream(), String.valueOf(StandardCharsets.UTF_8));
-            return mapper.readValue(execResponse, ExecutionResponse.class);
+            Gson g = new Gson();
+            return g.fromJson(execResponse, ExecutionResponse.class);
         } catch (IOException e) {
             throw new JasperClientException("Erreur lors du parsing de la réponse de la requete d'execution", HttpStatus.INTERNAL_SERVER_ERROR);
         }
