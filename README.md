@@ -2,6 +2,7 @@
 ## build informations
 [![Build Status](https://app.travis-ci.com/ErwanLT/JasperClient.svg?branch=dev)](https://app.travis-ci.com/ErwanLT/JasperClient)
 [![codecov](https://codecov.io/gh/ErwanLT/JasperClient/branch/dev/graph/badge.svg?token=gF99xjq9DF)](https://codecov.io/gh/ErwanLT/JasperClient)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/bee32ae2e1ef470cbc76f4761320e166)](https://www.codacy.com/gh/ErwanLT/JasperClient/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ErwanLT/JasperClient&amp;utm_campaign=Badge_Grade)
 ## Generate PDF using Jasper client
 ```mermaid
   flowchart TB
