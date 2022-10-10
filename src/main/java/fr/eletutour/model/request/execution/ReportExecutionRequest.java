@@ -93,8 +93,9 @@ public class ReportExecutionRequest {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ReportExecutionRequest that)) return false;
-        return getReportUnitUri().equals(that.getReportUnitUri()) && getAsync().equals(that.getAsync()) && getOutputFormat().equals(that.getOutputFormat()) && getParameters().equals(that.getParameters());
+        if (!(o instanceof ReportExecutionRequest)) return false;
+        ReportExecutionRequest that = (ReportExecutionRequest) o;
+        return Objects.equals(getReportUnitUri(), that.getReportUnitUri()) && Objects.equals(getAsync(), that.getAsync()) && Objects.equals(getOutputFormat(), that.getOutputFormat()) && Objects.equals(getParameters(), that.getParameters());
     }
 
     @Override

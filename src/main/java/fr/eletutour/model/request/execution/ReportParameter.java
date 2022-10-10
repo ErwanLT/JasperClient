@@ -52,8 +52,9 @@ public class ReportParameter {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ReportParameter that)) return false;
-        return getValue().equals(that.getValue());
+        if (!(o instanceof ReportParameter)) return false;
+        ReportParameter that = (ReportParameter) o;
+        return Objects.equals(name, that.name) && Objects.equals(getValue(), that.getValue());
     }
 
     @Override

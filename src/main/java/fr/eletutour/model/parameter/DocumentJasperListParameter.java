@@ -65,7 +65,8 @@ public class DocumentJasperListParameter {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DocumentJasperListParameter that)) return false;
+        if (!(o instanceof DocumentJasperListParameter)) return false;
+        DocumentJasperListParameter that = (DocumentJasperListParameter) o;
         return Objects.equals(getKey(), that.getKey()) && Objects.equals(getValues(), that.getValues());
     }
 

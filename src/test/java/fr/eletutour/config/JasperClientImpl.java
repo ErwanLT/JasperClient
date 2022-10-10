@@ -1,5 +1,6 @@
 package fr.eletutour.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.eletutour.client.JasperClient;
 import fr.eletutour.model.parameter.DocumentJasperArrayParameter;
 import fr.eletutour.model.parameter.DocumentJasperListParameter;
@@ -11,8 +12,8 @@ import java.util.Map;
 
 public class JasperClientImpl extends JasperClient {
 
-    public JasperClientImpl(String user, String password, String jasperUrl) {
-        super(user, password, jasperUrl);
+    public JasperClientImpl(String user, String password, String jasperUrl, ObjectMapper mapper) {
+        super(user, password, jasperUrl, mapper);
     }
 
     @Override

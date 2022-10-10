@@ -48,8 +48,9 @@ public class Parameters {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Parameters that)) return false;
-        return getReportParameter().equals(that.getReportParameter());
+        if (!(o instanceof Parameters)) return false;
+        Parameters that = (Parameters) o;
+        return Objects.equals(getReportParameter(), that.getReportParameter());
     }
 
     @Override

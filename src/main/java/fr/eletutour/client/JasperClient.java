@@ -27,7 +27,6 @@ package fr.eletutour.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import feign.Feign;
 import feign.Response;
 import feign.Retryer;
@@ -57,8 +56,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
-import static org.apache.tomcat.jni.Time.sleep;
 
 public abstract class JasperClient implements IJasperClient{
 
@@ -75,13 +74,14 @@ public abstract class JasperClient implements IJasperClient{
     protected final String user;
     protected final String password;
     protected final String jasperUrl;
-
+    protected final ObjectMapper mapper;
     private JasperFeignClient jasperFeignClient;
 
-    protected JasperClient(String user, String password, String jasperUrl) {
+    protected JasperClient(String user, String password, String jasperUrl, ObjectMapper mapper) {
         this.user = user;
         this.password = password;
         this.jasperUrl = jasperUrl;
+        this.mapper = mapper;
 
         init();
     }
@@ -109,13 +109,13 @@ public abstract class JasperClient implements IJasperClient{
      * @return un fichier PDF
      */
     @Override
-    public byte[] getPDF(DocumentJasperRequest documentJasperRequest) {
+    public byte[] getPDF(DocumentJasperRequest documentJasperRequest) throws InterruptedException {
         Map<String,Object> headerMap = initHeaderMap();
         List<String> cookies = new ArrayList<>();
         ExecutionResponse executionResponse = execute(documentJasperRequest, cookies, headerMap);
         boolean exportReady = executionResponse.getExports()[0].getStatus().equals("ready");
         while (!exportReady){
-            sleep(100);
+            TimeUnit.MILLISECONDS.sleep(100L);
             exportReady = checkExportStatus(executionResponse.getRequestId(), executionResponse.getExports()[0].getId(), cookies, headerMap);
         }
         byte[] pdf = getReport(documentJasperRequest.getUrlReport(), executionResponse.getRequestId(), executionResponse.getExports()[0].getId(), cookies, headerMap);
@@ -183,8 +183,7 @@ public abstract class JasperClient implements IJasperClient{
 
         try {
             String execResponse = IOUtils.toString(r.body().asInputStream(), String.valueOf(StandardCharsets.UTF_8));
-            Gson g = new Gson();
-            return g.fromJson(execResponse, ExecutionResponse.class);
+            return mapper.readValue(execResponse, ExecutionResponse.class);
         } catch (IOException e) {
             throw new JasperClientException("Erreur lors du parsing de la réponse de la requete d'execution", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -292,20 +291,17 @@ public abstract class JasperClient implements IJasperClient{
     private void checkResponseStatut(int statusCode, String step, String fileName, String requestBody){
         if(statusCode != 200){
             switch (step) {
-                case EXECUTION_STEP -> {
+                case EXECUTION_STEP :
                     LOGGER.error(EXECUTION_ERROR_REPORT, fileName);
                     LOGGER.error("corps de la requete en erreur : {}", requestBody);
                     throw new JasperClientException(EXECUTION_ERROR + " : " + HttpStatus.resolve(statusCode), HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                case RECUPERATION_STEP -> {
+                case RECUPERATION_STEP :
                     LOGGER.error(RECUPERATION_ERROR);
                     throw new JasperClientException(RECUPERATION_ERROR + " : " + HttpStatus.resolve(statusCode), HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                case STATUS_STEP -> {
+                case STATUS_STEP :
                     LOGGER.error(STATUS_ERROR);
                     throw new JasperClientException(STATUS_ERROR + " : " + HttpStatus.resolve(statusCode), HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                default -> throw new IllegalArgumentException("Step non reconnu.");
+                default : throw new IllegalArgumentException("Step non reconnu.");
             }
         }
     }

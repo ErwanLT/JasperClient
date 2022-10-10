@@ -63,7 +63,8 @@ public class DocumentJasperSimpleParameter {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DocumentJasperSimpleParameter that)) return false;
+        if (!(o instanceof DocumentJasperSimpleParameter)) return false;
+        DocumentJasperSimpleParameter that = (DocumentJasperSimpleParameter) o;
         return Objects.equals(getKey(), that.getKey()) && Objects.equals(getValue(), that.getValue());
     }
 

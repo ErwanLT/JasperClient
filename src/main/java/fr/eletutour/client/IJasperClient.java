@@ -33,7 +33,7 @@ import java.util.Map;
 
 public interface IJasperClient {
 
-    byte[] getPDF(DocumentJasperRequest documentJasperRequest);
+    byte[] getPDF(DocumentJasperRequest documentJasperRequest) throws InterruptedException;
 
     ExecutionResponse execute(DocumentJasperRequest documentJasperRequest, List<String> cookies, Map<String, Object> headerMap);
 
