@@ -1,6 +1,6 @@
 # Jasper Client
 ## build informations
-
+[![Build Status](https://app.travis-ci.com/ErwanLT/JasperClient.svg?branch=dev)](https://app.travis-ci.com/ErwanLT/JasperClient)
 ## Generate PDF using Jasper client
 ```mermaid
   flowchart TB
