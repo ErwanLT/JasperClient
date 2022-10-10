@@ -45,8 +45,9 @@ public final class StatusResponse {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof StatusResponse status)) return false;
-        return Objects.equals(value, status.value);
+        if (!(o instanceof StatusResponse)) return false;
+        StatusResponse that = (StatusResponse) o;
+        return Objects.equals(getValue(), that.getValue());
     }
 
     @Override

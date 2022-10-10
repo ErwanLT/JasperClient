@@ -39,6 +39,6 @@ public interface JasperFeignClient {
     @RequestLine("GET /reportExecutions/{requestId}/exports/{reportId}/status")
     Response status(@HeaderMap Map<String, Object> headerMap, @Param("requestId") String requestId, @Param("reportId") String reportId);
 
-    @RequestLine("GET /reportExecutions/{requestId}/exports/{reportId}/outputResources")
+    @RequestLine("GET /reportExecutions/{requestId}/exports/{reportId}/outputResource")
     Response getReport(@HeaderMap Map<String, Object> headerMap, @Param("requestId") String requestId, @Param("reportId") String reportId);
 }

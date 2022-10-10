@@ -27,6 +27,7 @@ package fr.eletutour.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import feign.Feign;
 import feign.Response;
 import feign.Retryer;
@@ -44,7 +45,7 @@ import fr.eletutour.model.request.execution.ReportParameter;
 import fr.eletutour.model.response.execution.ExecutionResponse;
 import fr.eletutour.model.response.status.StatusResponse;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -56,8 +57,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
-import static org.apache.tomcat.jni.Time.sleep;
 
 public abstract class JasperClient implements IJasperClient{
 
@@ -74,24 +75,25 @@ public abstract class JasperClient implements IJasperClient{
     protected final String user;
     protected final String password;
     protected final String jasperUrl;
-
+    protected final ObjectMapper mapper;
     private JasperFeignClient jasperFeignClient;
 
-    protected JasperClient(String user, String password, String jasperUrl) {
+    protected JasperClient(String user, String password, String jasperUrl, ObjectMapper mapper) {
         this.user = user;
         this.password = password;
         this.jasperUrl = jasperUrl;
+        this.mapper = mapper;
 
         init();
     }
 
     private void init() {
-        Feign.Builder builder = Feign.builder();
-        builder.requestInterceptor(new BasicAuthRequestInterceptor(user,
-                password));
-        builder.logger(new Slf4jLogger(JasperFeignClient.class));
-        builder.logLevel(feign.Logger.Level.FULL);
-        builder.retryer(Retryer.NEVER_RETRY);
+        Feign.Builder builder = Feign.builder()
+                .requestInterceptor(new BasicAuthRequestInterceptor(user,
+                password))
+                .logger(new Slf4jLogger(JasperFeignClient.class))
+                .logLevel(feign.Logger.Level.FULL)
+                .retryer(Retryer.NEVER_RETRY);
         jasperFeignClient = builder
                 .target(JasperFeignClient.class, jasperUrl);
 
@@ -108,13 +110,13 @@ public abstract class JasperClient implements IJasperClient{
      * @return un fichier PDF
      */
     @Override
-    public byte[] getPDF(DocumentJasperRequest documentJasperRequest) {
+    public byte[] getPDF(DocumentJasperRequest documentJasperRequest) throws InterruptedException {
         Map<String,Object> headerMap = initHeaderMap();
         List<String> cookies = new ArrayList<>();
         ExecutionResponse executionResponse = execute(documentJasperRequest, cookies, headerMap);
         boolean exportReady = executionResponse.getExports()[0].getStatus().equals("ready");
         while (!exportReady){
-            sleep(100);
+            TimeUnit.MILLISECONDS.sleep(100L);
             exportReady = checkExportStatus(executionResponse.getRequestId(), executionResponse.getExports()[0].getId(), cookies, headerMap);
         }
         byte[] pdf = getReport(documentJasperRequest.getUrlReport(), executionResponse.getRequestId(), executionResponse.getExports()[0].getId(), cookies, headerMap);
@@ -152,7 +154,6 @@ public abstract class JasperClient implements IJasperClient{
     private Map<String, Object> initHeaderMap() {
         Map<String,Object> headerMap = new HashMap<>();
         headerMap.put("Accept-Encoding", "gzip, deflate, br");
-        headerMap.put("Accept", "*/*");
         headerMap.put("Connection", "keep-alive");
         return headerMap;
     }
@@ -175,6 +176,7 @@ public abstract class JasperClient implements IJasperClient{
 
         String requestBody = buildXMLBody(documentJasperRequest);
         headerMap.put(CONTENT_TYPE, "application/xml");
+        headerMap.put("Accept", "application/json");
         feign.Response r = jasperFeignClient.executeReport(headerMap, requestBody);
 
         checkResponseStatut(r.status(), EXECUTION_STEP, documentJasperRequest.getUrlReport(), requestBody);
@@ -182,7 +184,8 @@ public abstract class JasperClient implements IJasperClient{
 
         try {
             String execResponse = IOUtils.toString(r.body().asInputStream(), String.valueOf(StandardCharsets.UTF_8));
-            return new ObjectMapper().readValue(execResponse, ExecutionResponse.class);
+            Gson g = new Gson();
+            return g.fromJson(execResponse, ExecutionResponse.class);
         } catch (IOException e) {
             throw new JasperClientException("Erreur lors du parsing de la réponse de la requete d'execution", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -290,20 +293,17 @@ public abstract class JasperClient implements IJasperClient{
     private void checkResponseStatut(int statusCode, String step, String fileName, String requestBody){
         if(statusCode != 200){
             switch (step) {
-                case EXECUTION_STEP -> {
+                case EXECUTION_STEP :
                     LOGGER.error(EXECUTION_ERROR_REPORT, fileName);
                     LOGGER.error("corps de la requete en erreur : {}", requestBody);
                     throw new JasperClientException(EXECUTION_ERROR + " : " + HttpStatus.resolve(statusCode), HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                case RECUPERATION_STEP -> {
+                case RECUPERATION_STEP :
                     LOGGER.error(RECUPERATION_ERROR);
                     throw new JasperClientException(RECUPERATION_ERROR + " : " + HttpStatus.resolve(statusCode), HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                case STATUS_STEP -> {
+                case STATUS_STEP :
                     LOGGER.error(STATUS_ERROR);
                     throw new JasperClientException(STATUS_ERROR + " : " + HttpStatus.resolve(statusCode), HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                default -> throw new IllegalArgumentException("Step non reconnu.");
+                default : throw new IllegalArgumentException("Step non reconnu.");
             }
         }
     }
