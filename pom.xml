@@ -108,12 +108,6 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>-Dfile.encoding=UTF-8</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>3.0.0-M6</version>
@@ -132,6 +126,9 @@
                     <processStartTag>========================LICENSE_START=================================</processStartTag>
                     <sectionDelimiter>======================================================================</sectionDelimiter>
                     <processEndTag>=========================LICENSE_END==================================</processEndTag>
+                    <roots>
+                        <root>src/main/java</root>
+                    </roots>
                 </configuration>
                 <executions>
                     <execution>
