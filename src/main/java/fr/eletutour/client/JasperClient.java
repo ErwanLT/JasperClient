@@ -59,7 +59,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-
+/**
+ * Client à implementer par les projets pour appel au server jasper<br>
+ * Pour récupérer un rapport sur le server nous procédons en 3 étapes
+ * <ol>
+ *     <li>La demande d'éxecution du rapport avec les paramètres qui lui sont envoyés</li>
+ *     <li>la vérification du statut de l'export avant récupération</li>
+ *     <li>récupération du PDF généré</li>
+ * </ol>
+ * Chaque implementation du client a à sa charge l'implementation des méthodes concernant la gestion des paramètres
+ *
+ * @author Erwan LE TUTOUR
+ */
 public abstract class JasperClient implements IJasperClient{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JasperClient.class);
@@ -87,6 +98,9 @@ public abstract class JasperClient implements IJasperClient{
         init();
     }
 
+    /**
+     * initialisation du client feign pour les requete HTTP avec les information passée en paramètres du constructeur
+     */
     private void init() {
         Feign.Builder builder = Feign.builder()
                 .requestInterceptor(new BasicAuthRequestInterceptor(user,
@@ -126,6 +140,18 @@ public abstract class JasperClient implements IJasperClient{
         return pdf;
     }
 
+    /**
+     * Vérification du statut d'un rapport avant récupération<br>
+     * Certains rapport pouvant êtres assez volumineux et long à générer il est essentiel de vérifier le statut
+     * de ce dernier avant d'essayer de le récupérer
+     * @param executionResponse la réponse de la requete d'execution
+     * @param cookies les cookies nécessaire à l'execution de la requets
+     * @param headerMap les headers de la requête
+     * @return <ol>
+     *     <li>true : export pret à être récupéré</li>
+     *     <li>false : il faut encore attendre avant de récupérer l'export</li>
+     * </ol>
+     */
     private Boolean checkExportStatus(String requestId, String reportId, List<String> cookies, Map<String, Object> headerMap) {
         headerMap.put("Cookie", StringUtils.join(cookies, ";"));
         headerMap.remove(CONTENT_TYPE);
