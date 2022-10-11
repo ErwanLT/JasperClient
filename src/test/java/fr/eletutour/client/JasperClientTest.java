@@ -6,6 +6,7 @@ import fr.eletutour.config.JasperClientImpl;
 import fr.eletutour.model.DocumentJasperRequest;
 import fr.eletutour.model.OutputFormat;
 import fr.eletutour.model.ReportParameters;
+import fr.eletutour.model.exception.JasperClientException;
 import fr.eletutour.model.parameter.DocumentJasperArrayParameter;
 import fr.eletutour.model.parameter.DocumentJasperListParameter;
 import fr.eletutour.model.parameter.DocumentJasperSimpleParameter;
@@ -23,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 class JasperClientTest {
@@ -81,16 +82,14 @@ class JasperClientTest {
                         )
         );
 
-        JasperClientException thrown = assertThrows(JasperClientException.class, () -> {
-            jasperClient.getPDF(createDocumentJasperRequest());
-        });
+        JasperClientException thrown = assertThrows(JasperClientException.class, () -> jasperClient.getPDF(createDocumentJasperRequest()));
 
         assertNotNull(thrown);
         assertEquals("Une erreur est survenue lors de la requete d'execution. : 500 INTERNAL_SERVER_ERROR", thrown.getMessage());
     }
 
     @Test
-    void testGetPDF_KO_recuperationError() throws IOException {
+    void testGetPDF_KO_recuperationError() {
         wireMockServer.stubFor(
                 post(urlEqualTo("/reportExecutions"))
                         .willReturn(aResponse()
@@ -108,9 +107,7 @@ class JasperClientTest {
                         )
         );
 
-        JasperClientException thrown = assertThrows(JasperClientException.class, () -> {
-            jasperClient.getPDF(createDocumentJasperRequest());
-        });
+        JasperClientException thrown = assertThrows(JasperClientException.class, () -> jasperClient.getPDF(createDocumentJasperRequest()));
 
         assertNotNull(thrown);
         assertEquals("Une erreur est survenue lors de la récupération du rapport : 404 NOT_FOUND", thrown.getMessage());
