@@ -81,7 +81,7 @@ class JasperClientTest {
                         )
         );
 
-        JasperException thrown = assertThrows(JasperException.class, () -> {
+        JasperClientException thrown = assertThrows(JasperClientException.class, () -> {
             jasperClient.getPDF(createDocumentJasperRequest());
         });
 
@@ -108,7 +108,7 @@ class JasperClientTest {
                         )
         );
 
-        JasperException thrown = assertThrows(JasperException.class, () -> {
+        JasperClientException thrown = assertThrows(JasperClientException.class, () -> {
             jasperClient.getPDF(createDocumentJasperRequest());
         });
 
