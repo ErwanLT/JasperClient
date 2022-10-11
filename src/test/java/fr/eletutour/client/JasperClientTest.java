@@ -34,7 +34,6 @@ class JasperClientTest {
     public void setup () {
         wireMockServer = new WireMockServer(9561);
         wireMockServer.start();
-        setupStub();
         jasperClient = new JasperClientImpl("user_test", "password_test", "http://localhost:9561", new ObjectMapper());
     }
 
@@ -42,7 +41,11 @@ class JasperClientTest {
     public void teardown () {
         wireMockServer.stop();
     }
-    public void setupStub() {
+
+    private JasperClient jasperClient;
+
+    @Test
+    public void testGetPDF() throws InterruptedException {
         wireMockServer.stubFor(
                 post(urlEqualTo("/reportExecutions"))
                         .willReturn(aResponse()
@@ -59,13 +62,62 @@ class JasperClientTest {
                                 .withStatus(HttpStatus.OK.value())
                                 .withBody("dummy pdf content".getBytes(StandardCharsets.UTF_8)))
         );
+        
+        byte[] pdf = jasperClient.getPDF(createDocumentJasperRequest());
+        assertNotNull(pdf);
+        assertEquals("dummy pdf content", new String(pdf, StandardCharsets.UTF_8));
+       
+    }
+    
+    @Test
+    void testGetPDF_KO_executionError(){
+
+        wireMockServer.stubFor(
+                post(urlEqualTo("/reportExecutions"))
+                        .willReturn(aResponse()
+                                .withStatus(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE+"; charset=utf-8")
+                                .withHeader("set-cookie", "JSESSIONID=1111111111111; SERVERID=jasper")
+                        )
+        );
+
+        JasperException thrown = assertThrows(JasperException.class, () -> {
+            jasperClient.getPDF(createDocumentJasperRequest());
+        });
+
+        assertNotNull(thrown);
+        assertEquals("Une erreur est survenue lors de la requete d'execution. : 500 INTERNAL_SERVER_ERROR", thrown.getMessage());
     }
 
-    private JasperClient jasperClient;
-
     @Test
-    public void testGetPDF() throws InterruptedException {
-        assertNotNull(jasperClient.getPDF(createDocumentJasperRequest()));
+    void testGetPDF_KO_recuperationError() throws IOException {
+        wireMockServer.stubFor(
+                post(urlEqualTo("/reportExecutions"))
+                        .willReturn(aResponse()
+                                .withStatus(HttpStatus.OK.value())
+                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE+"; charset=utf-8")
+                                .withHeader("set-cookie", "JSESSIONID=1111111111111; SERVERID=jasper")
+                                .withBody(
+                                        copyToString(
+                                                JasperClientTest.class.getClassLoader().getResourceAsStream("payload/execution.json"),
+                                                StandardCharsets.UTF_8)
+                                )
+                        )
+        );
+
+        wireMockServer.stubFor(
+                get(urlMatching("/reportExecutions\\/[a-zA-Z0-9-]+\\/exports\\/[a-zA-Z0-9-]+\\/outputResource"))
+                        .willReturn(aResponse()
+                                .withStatus(HttpStatus.NOT_FOUND.value())
+                        )
+        );
+
+        JasperException thrown = assertThrows(JasperException.class, () -> {
+            jasperClient.getPDF(createDocumentJasperRequest());
+        });
+
+        assertNotNull(thrown);
+        assertEquals("Une erreur est survenue lors de la récupération du rapport : 404 NOT_FOUND", thrown.getMessage());
     }
 
     private DocumentJasperRequest createDocumentJasperRequest() {
