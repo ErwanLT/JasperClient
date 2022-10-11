@@ -97,11 +97,7 @@ class JasperClientTest {
                                 .withStatus(HttpStatus.OK.value())
                                 .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE+"; charset=utf-8")
                                 .withHeader("set-cookie", "JSESSIONID=1111111111111; SERVERID=jasper")
-                                .withBody(
-                                        copyToString(
-                                                JasperClientTest.class.getClassLoader().getResourceAsStream("payload/execution.json"),
-                                                StandardCharsets.UTF_8)
-                                )
+                                .withBody("{\"status\":\"ready\",\"totalPages\":1,\"requestId\":\"217f7dc9-47c4-4c44-bada-7e29b653887b\",\"reportURI\":\"/test/test/test/test/export_test\",\"exports\":[{\"status\":\"ready\",\"outputResource\":{\"contentType\":\"application/pdf\",\"fileName\":\"export_test.pdf\",\"outputFinal\":true,\"outputTimestamp\":0},\"id\":\"6ca0038f-94ff-4bd9-bdf4-6a35259fd05e\"}]}")
                         )
         );
 
